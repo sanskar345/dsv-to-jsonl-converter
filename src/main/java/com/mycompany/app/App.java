@@ -3,6 +3,7 @@ package com.mycompany.app;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -17,55 +18,107 @@ public class App {
     public static Scanner input = new Scanner(System.in); // Create a Scanner object
 
     public static void main(String[] args) {
-        System.out.println("Enter the DSV Input Filename : ");
+
+        // Taking input from the user
+        System.out.println("Enter the DSV Input Filename (With Extension): ");
         String inputFile = input.nextLine();
 
         System.out.println("Enter the Delimeter in the File : ");
         String delimiter = input.nextLine();
 
-        System.out.println("Enter the Output Filename : ");
+        System.out.println("Enter the Output Filename (Only name with No Extension): ");
         String outputFile = input.nextLine();
+
+        // To read and convert dsv to jsonl
+        readInputAndCreateFile(inputFile, delimiter, outputFile);
+    }
+
+    // Function to read input file and create output having converted data in JSONL
+    public static void readInputAndCreateFile(String inputFile, String delimiter, String outputFile) {
 
         File file = new File("src/main/resources/" + inputFile);
 
+        // creating check variable so that we can read file from current directory which
+        // is case with running jar file and read file from resources folder when in
+        // intelliJ
+        boolean readInputFileFromCurrentDirectory = false;
+
+        // Check if file exist or not
         if (!file.exists()) {
-            System.out.println("The given input File does not exist!");
-            System.exit(0);
+
+            // Check if file exist in current directory if yes then proceed
+            // if not then terminate the execution
+            file = new File(inputFile);
+            if (!file.exists()) {
+                System.out.println("The given input File does not exist!");
+                System.exit(0);
+            }
+
+            // change value to true as file is in current directory.
+            readInputFileFromCurrentDirectory = true;
         }
 
         try {
 
+            // Creating a scanner object for file
             Scanner sc = new Scanner(file);
 
-            // Getting the keys --
+            // Getting the keys as they exist in the first line--
             String firstLine = sc.nextLine();
             String[] keys = splitString(firstLine, delimiter.charAt(0));
 
-            BufferedWriter jsonlFile = new BufferedWriter(
-                    new FileWriter("src/main/resources/" + outputFile + ".jsonl", true));
+            // condition for creating output file in current folder or the resource folder
+            BufferedWriter jsonlFile;
+            if (readInputFileFromCurrentDirectory) {
 
+                // If output file with the name already exists then deleting it
+                File existingOutputFile = new File(outputFile + ".jsonl");
+                if (existingOutputFile.exists()) {
+                    existingOutputFile.delete();
+                }
+
+                jsonlFile = new BufferedWriter(
+                        new FileWriter(outputFile + ".jsonl", true));
+            } else {
+
+                // If output file the name already exists then deleting it
+                File existingOutputFile = new File("src/main/resources/" + outputFile + ".jsonl");
+                if (existingOutputFile.exists()) {
+                    existingOutputFile.delete();
+                }
+
+                jsonlFile = new BufferedWriter(
+                        new FileWriter("src/main/resources/" + outputFile + ".jsonl", true));
+            }
+
+            // Reading the input file and writing in output file the converted data that is
+            // in JSONL
             while (sc.hasNextLine()) {
-
                 String[] values = splitString(sc.nextLine(), delimiter.charAt(0));
                 jsonlFile.write(getObject(keys, values) + "\n");
             }
 
+            // Closing the output file after writing in it
             jsonlFile.close();
-
-        } catch (Exception exp) {
-
+        } catch (IOException exp) {
+            System.out.println("IO Exception Occurred");
         }
-
     }
 
+    // This function splits the string with the given delimiter into an string array
+    // it takes care of quotation string and does not split it -- takes it as single
+    // word
     public static String[] splitString(String inputString, char delimiter) {
         List<String> result = new ArrayList<>();
         String currentWord = "";
         boolean insideQuotes = false;
 
+        // Looping through the characters of the line and making word out of it and
+        // adding them
+        // into an array splitting by delimiter
         for (char character : inputString.toCharArray()) {
             if (character == delimiter && !insideQuotes) {
-                result.add(currentWord.toString());
+                result.add(currentWord);
                 currentWord = "";
             } else {
                 if (character == '"') {
@@ -76,6 +129,7 @@ public class App {
             }
         }
 
+        // The last word
         result.add(currentWord.toString());
         return result.toArray(new String[0]);
     }
