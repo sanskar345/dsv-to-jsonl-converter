@@ -31,6 +31,7 @@ public class AppTest {
             while (sc.hasNextLine()) {
                 expectedOutput += sc.nextLine() + "\n";
             }
+            sc.close();
         } catch (FileNotFoundException exp) {
 
             // If file not found
@@ -53,6 +54,7 @@ public class AppTest {
             while (sc.hasNextLine()) {
                 actualOutput += sc.nextLine() + "\n";
             }
+            sc.close();
         } catch (FileNotFoundException exp) {
 
             // If file not found
@@ -78,6 +80,7 @@ public class AppTest {
             while (sc.hasNextLine()) {
                 actualOutput += sc.nextLine() + "\n";
             }
+            sc.close();
         } catch (FileNotFoundException exp) {
 
             // If file not found

@@ -15,11 +15,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class App {
-    public static Scanner input = new Scanner(System.in); // Create a Scanner object
 
     public static void main(String[] args) {
-
+        
         // Taking input from the user
+        Scanner input = new Scanner(System.in); // Create a Scanner object
+
         System.out.println("Enter the DSV Input Filename (With Extension): ");
         String inputFile = input.nextLine();
 
@@ -31,6 +32,8 @@ public class App {
 
         // To read and convert dsv to jsonl
         readInputAndCreateFile(inputFile, delimiter, outputFile);
+
+        input.close();
     }
 
     // Function to read input file and create output having converted data in JSONL
@@ -100,6 +103,7 @@ public class App {
 
             // Closing the output file after writing in it
             jsonlFile.close();
+            sc.close();
         } catch (IOException exp) {
             System.out.println("IO Exception Occurred");
         }
@@ -134,11 +138,16 @@ public class App {
         return result.toArray(new String[0]);
     }
 
-    public static String getObject(String[] keys, String[] values) throws JsonProcessingException {
+    // This function converts two arrays into a JSON object
+    public static String getObject(String[] keys, String[] values) {
 
+        // Creating an instance of ObjectMapper of JACKSON library and by that
+        // instance creating a JSON object using cresteObjectNode() method.
         ObjectMapper mapper = new ObjectMapper();
         ObjectNode jsonNode = mapper.createObjectNode();
 
+        // Looping through keys and values and adding them into JSON object
+        // conditionally.
         for (int i = 0; i < keys.length; i++) {
             String key = keys[i];
             String value = values[i];
@@ -155,11 +164,21 @@ public class App {
             }
         }
 
-        return mapper.writeValueAsString(jsonNode);
+        // For JSON string
+        String jsonString = "";
+        try {
+            jsonString = mapper.writeValueAsString(jsonNode);
+        } catch (JsonProcessingException exception) {
+            System.out.println(exception.getMessage());
+        }
+        return jsonString;
     }
 
+    // For converting date string into yyyy-MM-dd format
     public static String convertDate(String dateString) {
 
+        // Splitting the string to check whether the first element is year or day and
+        // adding formats that string can has
         String[] splittedDate = dateString.split("[-/]");
         List<String> formats = new ArrayList<>();
         if (splittedDate[0].length() > 2) {
@@ -170,8 +189,10 @@ public class App {
             formats.add("dd/MM/yyyy");
         }
 
-        String outputFormat = "yyyy-MM-dd";
+        String outputFormat = "yyyy-MM-dd"; // The desired format
 
+        // loop throughth formats that string can have parse them and convert it to
+        // the desired format
         for (String format : formats) {
             try {
                 DateFormat inputDateFormat = new SimpleDateFormat(format);
